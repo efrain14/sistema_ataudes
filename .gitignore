@@ -1,0 +1,13 @@
+# Entornos virtuales
+venv/
+env/
+ENV/
+.env/
+
+# Bases de datos
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.mdf
+*.ldf

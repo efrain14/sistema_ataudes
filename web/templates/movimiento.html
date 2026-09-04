@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movimiento - {{ ataud.codigo_qr }}</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#1a1a1a; color:#eee; padding:20px; }
+  .card { background:#2c2c2c; border-radius:10px; padding:20px; max-width:500px; margin:auto; }
+  h1 { color:#4a9eff; }
+  .info { background:#333; padding:10px; border-radius:5px; margin:10px 0; }
+  button { width:100%; padding:15px; margin:8px 0; border:none; border-radius:8px;
+           font-size:16px; font-weight:bold; cursor:pointer; color:white; }
+  .btn-salida { background:#e67e22; }
+  .btn-retorno { background:#3498db; }
+  .btn-confirmar { background:#27ae60; }
+  .btn-baja { background:#c0392b; }
+  input, textarea { width:100%; padding:10px; margin:5px 0; border-radius:5px; border:1px solid #555; background:#444; color:#eee; }
+  .critico { background:#c0392b !important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>📦 {{ ataud.codigo_qr }}</h1>
+  <div class="info">
+    <p><b>Tipo:</b> {{ ataud.tipo }} | <b>Color:</b> {{ ataud.color }}</p>
+    <p><b>Estado:</b> {{ ataud.estado }}</p>
+    <p><b>Usos:</b> {{ ataud.contador_usos }} / {{ umbral }}</p>
+  </div>
+
+  <form method="POST" action="/registrar">
+    <input type="hidden" name="codigo_qr" value="{{ ataud.codigo_qr }}">
+
+    {% if ataud.estado == 'Disponible' %}
+      <h3>🚚 Salida a Servicio</h3>
+      <input type="text" name="destino" placeholder="Destino / Servicio" required>
+      <input type="text" name="responsable" placeholder="Responsable" required>
+      <button type="submit" name="accion" value="salida_servicio" class="btn-salida">Registrar Salida</button>
+
+      <h3>⚰️ Entierro Definitivo (no retorna)</h3>
+      <input type="text" name="destino" placeholder="Destino / Cementerio">
+      <textarea name="detalles" placeholder="Observaciones"></textarea>
+      <button type="submit" name="accion" value="entierro_definitivo" class="btn-baja">Registrar Entierro Definitivo</button>
+
+    {% elif ataud.estado == 'En Uso' %}
+      <h3>🔄 Retorno para Restauración</h3>
+      <textarea name="detalles" placeholder="Detalle de trabajos a realizar" required></textarea>
+      <input type="text" name="responsable" placeholder="Responsable" required>
+      <button type="submit" name="accion" value="retorno_restauracion" class="btn-retorno">Registrar Retorno</button>
+
+    {% elif ataud.estado == 'En Restauración' %}
+      <h3>✅ Confirmar Restauración Completada</h3>
+      <button type="submit" name="accion" value="confirmar_restauracion" class="btn-confirmar">Confirmar y Liberar</button>
+    {% else %}
+      <p>⚠️ Estado actual: <b>{{ ataud.estado }}</b> — sin acciones disponibles.</p>
+    {% endif %}
+  </form>
+</div>
+</body>
+</html>
