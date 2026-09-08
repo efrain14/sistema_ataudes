@@ -1,4 +1,5 @@
 import os
+import socket
 
 # Rutas base
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +18,22 @@ UMBRAL_USOS_CRITICO = 20
 # Estados válidos
 ESTADOS_VALIDOS = ("Disponible", "En Uso", "En Restauración", "Dado de Baja")
 
-# Servidor web para escaneo móvil (Opción A)
-WEB_HOST = "0.0.0.0"
+# ============ CONFIGURACIÓN DE RED PARA QR ============
+def obtener_ip_local():
+    """Obtiene automáticamente la IP local de la PC."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except:
+        return "localhost"
+
+# IP y puerto del servidor web
+WEB_HOST = "0.0.0.0"  # Escucha en todas las interfaces
 WEB_PORT = 5000
 WEB_SECRET = "cambia-esta-clave-secreta-en-produccion"
+
+# URL base para los QR (se genera automáticamente)
+WEB_URL_BASE = f"http://{obtener_ip_local()}:{WEB_PORT}"

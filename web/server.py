@@ -55,6 +55,21 @@ def registrar():
 
 def iniciar_servidor_web():
     """Ejecuta el servidor Flask en un hilo separado."""
-    t = threading.Thread(target=lambda: app.run(host=WEB_HOST, port=WEB_PORT, debug=False, use_reloader=False), daemon=True)
+    import threading
+    from config import WEB_HOST, WEB_PORT, WEB_URL_BASE
+    
+    def run_server():
+        from web.server import app
+        app.run(host=WEB_HOST, port=WEB_PORT, debug=False, use_reloader=False)
+    
+    t = threading.Thread(target=run_server, daemon=True)
     t.start()
-    print(f"🌐 Servidor web móvil activo en http://{WEB_HOST}:{WEB_PORT}")
+    
+    # Mensaje informativo con la URL real que debe usarse desde el celular
+    print("\n" + "="*70)
+    print("🌐  SERVIDOR WEB PARA ESCANEO QR - ACTIVO")
+    print("="*70)
+    print(f" URL base para móviles: {WEB_URL_BASE}")
+    print(f"🔍 Escanea el QR desde tu celular (misma red WiFi)")
+    print(f"ℹ️  Si no funciona, verifica que PC y celular estén en la misma red")
+    print("="*70 + "\n")

@@ -151,6 +151,44 @@ class AtaudDAO:
         return dict(row) if row else None
 
     @staticmethod
+    def generar_siguiente_codigo():
+        """Genera el siguiente código QR automático: AT-YYYY-NNN"""
+        from datetime import datetime
+        año = datetime.now().year
+        conn = get_connection()
+        # Buscar el último código del año actual
+        row = conn.execute(
+            "SELECT codigo_qr FROM ataudes WHERE codigo_qr LIKE ? ORDER BY id DESC LIMIT 1",
+            (f"AT-{año}-%",)
+        ).fetchone()
+        conn.close()
+        
+        if row:
+            # Extraer el número y incrementar
+            ultimo_num = int(row["codigo_qr"].split("-")[-1])
+            nuevo_num = ultimo_num + 1
+        else:
+            nuevo_num = 1
+        
+        return f"AT-{año}-{nuevo_num:03d}"
+
+    @staticmethod
+    def obtener_tipos_unicos():
+        """Retorna lista de tipos de ataúd únicos registrados."""
+        conn = get_connection()
+        rows = conn.execute("SELECT DISTINCT tipo FROM ataudes WHERE tipo IS NOT NULL ORDER BY tipo").fetchall()
+        conn.close()
+        return [r["tipo"] for r in rows]
+
+    @staticmethod
+    def obtener_colores_unicos():
+        """Retorna lista de colores únicos registrados."""
+        conn = get_connection()
+        rows = conn.execute("SELECT DISTINCT color FROM ataudes WHERE color IS NOT NULL ORDER BY color").fetchall()
+        conn.close()
+        return [r["color"] for r in rows]
+
+    @staticmethod
     def metricas():
         conn = get_connection()
         total = conn.execute("SELECT COUNT(*) FROM ataudes").fetchone()[0]

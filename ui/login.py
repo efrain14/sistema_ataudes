@@ -3,9 +3,9 @@ from tkinter import messagebox
 from database.daos import UsuarioDAO
 
 class LoginWindow(ctk.CTk):
-    def __init__(self, on_success):
+    def __init__(self):
         super().__init__()
-        self.on_success = on_success
+        self.usuario = None  # Se guardará aquí si el login es exitoso
         self.title("Iniciar Sesión - Sistema de Ataúdes")
         self.geometry("420x360")
         self.resizable(False, False)
@@ -39,8 +39,9 @@ class LoginWindow(ctk.CTk):
             return
         user = UsuarioDAO.autenticar(u, p)
         if user:
-            self.usuario = user
-            self.on_success(user)
-            self.destroy()
+            self.usuario = user  # Guardar usuario
+            self.destroy()       # ✅ Cerrar ventana de login
         else:
             messagebox.showerror("Error", "Credenciales inválidas")
+            self.entry_pass.delete(0, "end")
+            self.entry_pass.focus()
