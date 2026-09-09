@@ -68,12 +68,25 @@ class InventarioView(ctk.CTkFrame):
         headers = ["ID", "Código QR", "Cód.Viejo", "Tipo", "Color", "Estado", "Usos", "Precio", "Acciones"]
         for j, h in enumerate(headers):
             ctk.CTkLabel(self.tabla_frame, text=h, font=ctk.CTkFont(weight="bold"), width=100).grid(row=0, column=j, padx=3, pady=3)
+            
+        from datetime import datetime    
 
         for i, a in enumerate(datos, start=1):
             es_critico = a["contador_usos"] >= UMBRAL_USOS_CRITICO and a["estado"] != "Dado de Baja"
             color = "#ff6b6b" if es_critico else ("#ffaa00" if a["estado"] == "En Uso" else "")
+            
+            # CONVERSIÓN DE FECHA PARA MOSTRAR
+            fecha_mostrar = a["fecha_compra"]
+            if fecha_mostrar:
+                try:
+                    fecha_mostrar = datetime.strptime(str(fecha_mostrar), "%Y-%m-%d").strftime("%d-%m-%Y")
+                except:
+                    pass # Si falla, deja la original
+
             valores = [a["id"], a["codigo_qr"], a["codigo_viejo"] or "-", a["tipo"], a["color"],
-                       a["estado"], a["contador_usos"], f"${a['precio']}"]
+                        a["estado"], a["contador_usos"], f"${a['precio']}"]
+            
+            
             for j, v in enumerate(valores):
                 lbl = ctk.CTkLabel(self.tabla_frame, text=str(v), text_color=color if color else None, width=100)
                 lbl.grid(row=i, column=j, padx=3, pady=2)

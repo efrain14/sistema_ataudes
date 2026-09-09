@@ -90,6 +90,11 @@ class ControlCicloView(ctk.CTkFrame):
 
     def salida_servicio(self):
         if self._requiere_seleccion(): return
+        
+        # NUEVA VALIDACIÓN: Una salida por día
+        if AtaudDAO.ya_salio_hoy(self.ataud_actual["id"]):
+            return messagebox.showerror("Bloqueado", "⚠️ Este ataúd ya registró una salida el día de hoy. No puede salir dos veces en el mismo día.")
+
         ok, msg = AtaudDAO.puede_asignarse(self.ataud_actual["id"])
         if not ok:
             return messagebox.showerror("Bloqueado", msg)
@@ -112,6 +117,11 @@ class ControlCicloView(ctk.CTkFrame):
 
     def entierro_definitivo(self):
         if self._requiere_seleccion(): return
+        
+        # NUEVA VALIDACIÓN: Una salida por día
+        if AtaudDAO.ya_salio_hoy(self.ataud_actual["id"]):
+            return messagebox.showerror("Bloqueado", "⚠️ Este ataúd ya registró una salida el día de hoy.")
+
         if self.ataud_actual["estado"] not in ("Disponible", "En Uso"):
             return messagebox.showerror("Error", "Solo disponible o en uso")
         ModalSalidaEntierro(self, self.ataud_actual, modo="entierro")

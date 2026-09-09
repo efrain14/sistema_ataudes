@@ -142,19 +142,23 @@ class RegistroView(ctk.CTkFrame):
         # Configurar navegación con teclado (Enter y Tab)
         self.configurar_navegacion_teclado()
 
-        # Si es edición, cargar datos y deshabilitar código QR
+                # Si es edición, cargar datos y deshabilitar código QR
         if ataud_editar:
             for k, v in ataud_editar.items():
+                if k == "fecha_compra" and v:
+                    # Convertir de YYYY-MM-DD a DD-MM-AAAA para el formulario
+                    try:
+                        dt = datetime.strptime(str(v), "%Y-%m-%d")
+                        v = dt.strftime("%d-%m-%Y")
+                    except:
+                        pass
+                
                 if k in self.entries and v is not None:
                     if isinstance(self.entries[k], ctk.CTkComboBox):
                         self.entries[k].set(str(v))
                     else:
+                        self.entries[k].delete(0, "end")
                         self.entries[k].insert(0, str(v))
-            self.entries["codigo_qr"].configure(state="disabled")
-        else:
-            # Generar código QR automático
-            codigo_auto = AtaudDAO.generar_siguiente_codigo()
-            self.entries["codigo_qr"].insert(0, codigo_auto)
             self.entries["codigo_qr"].configure(state="readonly")
 
         btn_frame = ctk.CTkFrame(self)

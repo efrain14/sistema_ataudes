@@ -202,7 +202,21 @@ class AtaudDAO:
         conn.close()
         return {"total": total, "disponibles": disp, "en_uso": uso, "restauracion": rest, "baja": baja, "criticos": criticos}
 
-
+    @staticmethod
+    def ya_salio_hoy(ataud_id):
+        """Verifica si el ataúd ya tiene una salida registrada en la fecha actual."""
+        from datetime import datetime
+        conn = get_connection()
+        hoy = datetime.now().strftime("%Y-%m-%d")
+        
+        # Usamos DATE(fecha_salida, 'localtime') para coincidir con la fecha local del usuario
+        row = conn.execute(
+            "SELECT COUNT(*) as count FROM historial_usos WHERE ataud_id = ? AND DATE(fecha_salida, 'localtime') = ?",
+            (ataud_id, hoy)
+        ).fetchone()
+        conn.close()
+        return row["count"] > 0
+    
 # ============ HISTORIAL ============
 class HistorialDAO:
     @staticmethod

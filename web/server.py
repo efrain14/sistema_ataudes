@@ -28,25 +28,25 @@ def registrar():
         return "Ataúd no encontrado", 404
 
     if accion == "salida_servicio":
+        # Validar una salida por día
+        from database.daos import AtaudDAO
+        if AtaudDAO.ya_salio_hoy(ataud["id"]):
+            return "⚠️ Este ataúd ya registró una salida el día de hoy.", 400
+            
         ok, msg = AtaudDAO.puede_asignarse(ataud["id"])
         if not ok:
             return f"⚠️ No se puede asignar: {msg}", 400
         HistorialDAO.registrar_salida_servicio(ataud["id"], destino, responsable)
         return "✅ Salida registrada. Ataúd EN USO."
 
-    elif accion == "retorno_restauracion":
-        if ataud["estado"] != "En Uso":
-            return "⚠️ El ataúd no está en uso", 400
-        HistorialDAO.registrar_retorno_restauracion(ataud["id"], detalles, responsable)
-        return "✅ Retorno registrado. Ataúd EN RESTAURACIÓN."
-
-    elif accion == "confirmar_restauracion":
-        if ataud["estado"] != "En Restauración":
-            return "⚠️ Debe estar en restauración primero", 400
-        HistorialDAO.confirmar_restauracion(ataud["id"])
-        return "✅ Restauración confirmada. Ataúd DISPONIBLE."
+    # ... (código de retorno) ...
 
     elif accion == "entierro_definitivo":
+        # Validar una salida por día
+        from database.daos import AtaudDAO
+        if AtaudDAO.ya_salio_hoy(ataud["id"]):
+            return "⚠️ Este ataúd ya registró una salida el día de hoy.", 400
+            
         HistorialDAO.registrar_salida_entierro_definitivo(ataud["id"], destino, detalles)
         return "✅ Registrado. Ataúd DADO DE BAJA (entierro definitivo)."
 
