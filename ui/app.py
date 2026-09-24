@@ -4,12 +4,20 @@ from ui.inventario import InventarioView
 from ui.registro import RegistroView
 from ui.control_ciclo import ControlCicloView
 from web.server import iniciar_servidor_web
+from ui.login import LoginModal
 
 class App(ctk.CTk):
-    def __init__(self, usuario):
+    def __init__(self, usuario=None):
         super().__init__()
         self.usuario = usuario
-        self.title(f"Sistema de Ataúdes — {usuario['nombre_completo']} ({usuario['rol']})")
+        
+        if self.usuario is not None:
+            nombre = self.usuario.get('nombre_completo', 'Usuario')
+            rol = self.usuario.get('rol', 'Rol')
+            self.title(f"Sistema de Ataúdes — {nombre} ({rol})")
+        else:
+            self.title("Sistema de Ataúdes — Iniciando sesión...")
+            
         self.geometry("1280x780")
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
@@ -23,7 +31,7 @@ class App(ctk.CTk):
         self.sidebar.grid(row=0, column=0, sticky="nsw")
         self.sidebar.grid_propagate(False)
 
-        ctk.CTkLabel(self.sidebar, text="🏛️ ATAÚDES", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 30))
+        ctk.CTkLabel(self.sidebar, text="️ ATAÚDES", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 30))
 
         self.botones_menu = []
         menus = [
@@ -37,9 +45,9 @@ class App(ctk.CTk):
             b.pack(fill="x", padx=10, pady=5)
             self.botones_menu.append(b)
 
-        # Toggle tema
+        # Toggle tema y Cerrar Sesión
         ctk.CTkButton(self.sidebar, text="🌓 Cambiar Tema", command=self.toggle_tema).pack(side="bottom", padx=10, pady=10)
-        ctk.CTkButton(self.sidebar, text="🚪 Cerrar Sesión", command=self.cerrar_sesion, fg_color="red", hover_color="darkred").pack(side="bottom", padx=10, pady=10)
+        ctk.CTkButton(self.sidebar, text="🚪 Cerrar Sesión", command=self.cerrar_sesion, fg_color="#c0392b", hover_color="#a93226").pack(side="bottom", padx=10, pady=10)
 
         # Contenedor de vistas
         self.contenedor = ctk.CTkFrame(self, corner_radius=0)
@@ -54,9 +62,17 @@ class App(ctk.CTk):
         try:
             iniciar_servidor_web()
         except Exception as e:
-            print(f"⚠️ Servidor web no iniciado: {e}")
+            print(f"️ Servidor web no iniciado: {e}")
 
+        # Cargar dashboard por defecto
         self.mostrar_dashboard()
+
+    def actualizar_titulo_usuario(self):
+        """Actualiza el título de la ventana una vez que el usuario se loguea."""
+        if self.usuario:
+            nombre = self.usuario.get('nombre_completo', 'Usuario')
+            rol = self.usuario.get('rol', 'Rol')
+            self.title(f"Sistema de Ataúdes — {nombre} ({rol})")
 
     def limpiar_contenedor(self):
         for w in self.contenedor.winfo_children():
@@ -93,7 +109,17 @@ class App(ctk.CTk):
 
     def cerrar_sesion(self):
         from tkinter import messagebox
-        if messagebox.askyesno("Salir", "¿Cerrar sesión?"):
-            self.destroy()
-            from main import iniciar_app
-            iniciar_app()
+        if messagebox.askyesno("Salir", "¿Está seguro de que desea cerrar sesión?"):
+            # En lugar de destruir la ventana, la ocultamos
+            self.withdraw() 
+            self.usuario = None
+            
+            # Función para cuando vuelva a loguearse
+            def on_login_success(usuario):
+                self.usuario = usuario
+                self.actualizar_titulo_usuario()
+                self.deiconify() # Volver a mostrar la ventana
+                self.mostrar_dashboard()
+                
+            # Mostrar el login de nuevo
+            login = LoginModal(self, on_login_success)

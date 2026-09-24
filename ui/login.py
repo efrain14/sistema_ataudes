@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from tkinter import messagebox
+import sys
 from database.daos import UsuarioDAO
 
 class LoginModal(ctk.CTkToplevel):
@@ -10,10 +11,12 @@ class LoginModal(ctk.CTkToplevel):
         self.geometry("420x360")
         self.resizable(False, False)
         
-        # Hacer modal (bloquea la ventana principal hasta cerrarse)
+        # Hacer modal (bloquea la ventana principal)
         self.transient(parent)
         self.grab_set()
-        self.protocol("WM_DELETE_WINDOW", self.cancelar) # Si cierra con la X, se cierra la app
+        
+        # Si cierra con la X, cerramos toda la aplicación
+        self.protocol("WM_DELETE_WINDOW", self.cancelar)
 
         self.grid_columnconfigure(0, weight=1)
 
@@ -44,7 +47,7 @@ class LoginModal(ctk.CTkToplevel):
         user = UsuarioDAO.autenticar(u, p)
         if user:
             self.on_success(user)
-            self.destroy() # Se cierra limpiamente sin errores de "after"
+            self.destroy() # Se oculta el modal
         else:
             messagebox.showerror("Error", "Credenciales inválidas", parent=self)
             self.entry_pass.delete(0, "end")
@@ -52,5 +55,4 @@ class LoginModal(ctk.CTkToplevel):
 
     def cancelar(self):
         self.destroy()
-        # Si se cierra el login, cerramos toda la aplicación
-        self.master.destroy()
+        sys.exit(0) # Cierra toda la aplicación si cancelan el login
