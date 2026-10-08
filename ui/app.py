@@ -4,25 +4,19 @@ from ui.inventario import InventarioView
 from ui.registro import RegistroView
 from ui.control_ciclo import ControlCicloView
 from web.server import iniciar_servidor_web
-from ui.login import LoginModal
 
-class App(ctk.CTk):
-    def __init__(self, usuario=None):
-        super().__init__()
+class App(ctk.CTkFrame):
+    def __init__(self, parent, usuario, on_logout_callback):
+        super().__init__(parent)
         self.usuario = usuario
+        self.on_logout_callback = on_logout_callback
+        self.pack(fill="both", expand=True)
         
-        if self.usuario is not None:
-            nombre = self.usuario.get('nombre_completo', 'Usuario')
-            rol = self.usuario.get('rol', 'Rol')
-            self.title(f"Sistema de Ataúdes — {nombre} ({rol})")
-        else:
-            self.title("Sistema de Ataúdes — Iniciando sesión...")
-            
-        self.geometry("1280x780")
+        parent.title(f"Sistema de Ataúdes — {usuario['nombre_completo']} ({usuario['rol']})")
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        # Layout: sidebar + contenido
+        # Layout: Sidebar (col 0) + Contenido (col 1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
@@ -31,23 +25,19 @@ class App(ctk.CTk):
         self.sidebar.grid(row=0, column=0, sticky="nsw")
         self.sidebar.grid_propagate(False)
 
-        ctk.CTkLabel(self.sidebar, text="️ ATAÚDES", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 30))
+        ctk.CTkLabel(self.sidebar, text="🏛️ ATAÚDES", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 30))
 
-        self.botones_menu = []
         menus = [
             ("📊 Dashboard", self.mostrar_dashboard),
             ("📦 Inventario", self.mostrar_inventario),
-            ("➕ Registro / Edición", self.mostrar_registro),
+            (" Registro / Edición", self.mostrar_registro),
             ("🔄 Control de Ciclo", self.mostrar_control_ciclo),
         ]
         for texto, cmd in menus:
-            b = ctk.CTkButton(self.sidebar, text=texto, command=cmd, anchor="w", height=40)
-            b.pack(fill="x", padx=10, pady=5)
-            self.botones_menu.append(b)
+            ctk.CTkButton(self.sidebar, text=texto, command=cmd, anchor="w", height=40).pack(fill="x", padx=10, pady=5)
 
-        # Toggle tema y Cerrar Sesión
         ctk.CTkButton(self.sidebar, text="🌓 Cambiar Tema", command=self.toggle_tema).pack(side="bottom", padx=10, pady=10)
-        ctk.CTkButton(self.sidebar, text="🚪 Cerrar Sesión", command=self.cerrar_sesion, fg_color="#c0392b", hover_color="#a93226").pack(side="bottom", padx=10, pady=10)
+        ctk.CTkButton(self.sidebar, text=" Cerrar Sesión", command=self.cerrar_sesion, fg_color="#c0392b", hover_color="#a93226").pack(side="bottom", padx=10, pady=10)
 
         # Contenedor de vistas
         self.contenedor = ctk.CTkFrame(self, corner_radius=0)
@@ -55,71 +45,58 @@ class App(ctk.CTk):
         self.contenedor.grid_columnconfigure(0, weight=1)
         self.contenedor.grid_rowconfigure(0, weight=1)
 
-        self.vistas = {}
-        self.vista_actual = None
-
-        # Iniciar servidor web para escaneo móvil
+        # Iniciar servidor web
         try:
             iniciar_servidor_web()
         except Exception as e:
             print(f"️ Servidor web no iniciado: {e}")
 
-        # Cargar dashboard por defecto
         self.mostrar_dashboard()
-
-    def actualizar_titulo_usuario(self):
-        """Actualiza el título de la ventana una vez que el usuario se loguea."""
-        if self.usuario:
-            nombre = self.usuario.get('nombre_completo', 'Usuario')
-            rol = self.usuario.get('rol', 'Rol')
-            self.title(f"Sistema de Ataúdes — {nombre} ({rol})")
 
     def limpiar_contenedor(self):
         for w in self.contenedor.winfo_children():
             w.destroy()
-        self.vista_actual = None
 
     def mostrar_dashboard(self):
         self.limpiar_contenedor()
-        v = DashboardView(self.contenedor)
-        v.pack(fill="both", expand=True)
-        self.vista_actual = v
+        DashboardView(self.contenedor).pack(fill="both", expand=True)
 
     def mostrar_inventario(self):
         self.limpiar_contenedor()
-        v = InventarioView(self.contenedor, self)
-        v.pack(fill="both", expand=True)
-        self.vista_actual = v
+        InventarioView(self.contenedor, self).pack(fill="both", expand=True)
 
     def mostrar_registro(self, ataud_editar=None):
         self.limpiar_contenedor()
-        v = RegistroView(self.contenedor, self, ataud_editar)
-        v.pack(fill="both", expand=True)
-        self.vista_actual = v
+        RegistroView(self.contenedor, self, ataud_editar).pack(fill="both", expand=True)
 
     def mostrar_control_ciclo(self):
         self.limpiar_contenedor()
-        v = ControlCicloView(self.contenedor)
-        v.pack(fill="both", expand=True)
-        self.vista_actual = v
+        ControlCicloView(self.contenedor).pack(fill="both", expand=True)
 
     def toggle_tema(self):
         actual = ctk.get_appearance_mode()
         ctk.set_appearance_mode("light" if actual == "Dark" else "dark")
 
+    def _limpiar_todo(self):
+        """Destruye TODOS los widgets hijos antes de destruir el frame."""
+        # Destruir todos los widgets del contenedor
+        for w in self.contenedor.winfo_children():
+            w.destroy()
+        
+        # Destruir todos los widgets del sidebar
+        for w in self.sidebar.winfo_children():
+            w.destroy()
+        
+        # Quitar el sidebar y contenedor del grid
+        self.sidebar.grid_forget()
+        self.contenedor.grid_forget()
+
     def cerrar_sesion(self):
         from tkinter import messagebox
         if messagebox.askyesno("Salir", "¿Está seguro de que desea cerrar sesión?"):
-            # En lugar de destruir la ventana, la ocultamos
-            self.withdraw() 
-            self.usuario = None
-            
-            # Función para cuando vuelva a loguearse
-            def on_login_success(usuario):
-                self.usuario = usuario
-                self.actualizar_titulo_usuario()
-                self.deiconify() # Volver a mostrar la ventana
-                self.mostrar_dashboard()
-                
-            # Mostrar el login de nuevo
-            login = LoginModal(self, on_login_success)
+            # ✅ LIMPIEZA TOTAL antes de destruir
+            self._limpiar_todo()
+            # Forzar actualización visual
+            self.update_idletasks()
+            # Llamar al callback de logout
+            self.on_logout_callback()

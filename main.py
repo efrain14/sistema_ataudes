@@ -1,31 +1,45 @@
 import customtkinter as ctk
 import sys
 from database.schema import inicializar_bd
-from ui.login import LoginModal
+from ui.login import LoginWindow
 from ui.app import App
 
 def iniciar_app():
-    # 1. Inicializar base de datos
     inicializar_bd()
     
-    # 2. Crear la ventana principal
-    app = App(usuario=None)
+    # 1. Una sola ventana principal para toda la vida de la aplicación
+    root = ctk.CTk()
+    root.title("Sistema de Ataúdes")
+    root.geometry("1280x780")
+    root.withdraw() # Oculta la ventana principal al inicio
     
-    # Ocultar la ventana principal hasta que el usuario se loguee
-    app.withdraw() 
-    
-    # 3. Función que se ejecuta cuando el login es exitoso
+    app_frame = None # Referencia al marco del dashboard
+
+    # 2. Qué hacer cuando el login es exitoso
     def on_login_success(usuario):
-        app.usuario = usuario
-        app.actualizar_titulo_usuario()
-        app.deiconify() # Mostrar la ventana principal
-        app.mostrar_dashboard() # Cargar el dashboard
+        nonlocal app_frame
+        root.deiconify() # Muestra la ventana principal
+        # Crea el dashboard y lo inserta en la ventana principal
+        app_frame = App(root, usuario, on_logout)
+        app_frame.pack(fill="both", expand=True)
+
+    # 3. Qué hacer al cerrar sesión - CIERRA TODA LA APLICACIÓN
+    def on_logout():
+        nonlocal app_frame
+        if app_frame:
+            app_frame.pack_forget()
+            app_frame.destroy()
+            app_frame = None
         
-    # 4. Mostrar el modal de login
-    login = LoginModal(app, on_login_success)
+        # ✅ Cerrar toda la aplicación en lugar de mostrar login
+        root.destroy()
+        sys.exit(0)
+
+    # 4. Mostrar el login inicial
+    LoginWindow(root, on_login_success)
     
     # 5. Iniciar el bucle principal
-    app.mainloop()
+    root.mainloop()
 
 if __name__ == "__main__":
     iniciar_app()
